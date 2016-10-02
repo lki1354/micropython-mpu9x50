@@ -43,9 +43,9 @@ class MPU9250(InvenSenseMPU):
     _mag_addr = 12          # Magnetometer address
     _chip_id = 113
 
-    def __init__(self, side_str, device_addr=None, transposition=(0, 1, 2), scaling=(1, 1, 1)):
+    def __init__(self, pins=('GP13', 'GP12'), device_addr=None, transposition=(0, 1, 2), scaling=(1, 1, 1)):
 
-        super().__init__(side_str, device_addr, transposition, scaling)
+        super().__init__(pins, device_addr, transposition, scaling)
         self._mag = Vector3d(transposition, scaling, self._mag_callback)
         self.accel_filter_range = 0             # fast filtered response
         self.gyro_filter_range = 0
@@ -70,7 +70,7 @@ class MPU9250(InvenSenseMPU):
             self._read(self.buf2, 0x41, self.mpu_addr)
         except OSError:
             raise MPUException(self._I2Cerror)
-        return bytes_toint(self.buf2[0], self.buf2[1])//333.87 + 21  # I think
+        return bytes_toint(self.buf2[0], self.buf2[1])//333 + 21  # I think
 
     # Low pass filters
     @property
@@ -148,9 +148,9 @@ class MPU9250(InvenSenseMPU):
             self._write(0x16, 0x0A, self._mag_addr)      # 16 bit (0.15uT/LSB not 0.015), mode 2
         except OSError:
             raise MPUException(self._I2Cerror)
-        mag_x = (0.5*(self.buf3[0] - 128))//128 + 1
-        mag_y = (0.5*(self.buf3[1] - 128))//128 + 1
-        mag_z = (0.5*(self.buf3[2] - 128))//128 + 1
+        mag_x = ((self.buf3[0] - 128))//256 + 1
+        mag_y = ((self.buf3[1] - 128))//256 + 1
+        mag_z = ((self.buf3[2] - 128))//256 + 1
         return (mag_x, mag_y, mag_z)
 
     @property
@@ -178,10 +178,10 @@ class MPU9250(InvenSenseMPU):
         self._mag._ivector[1] = bytes_toint(self.buf6[1], self.buf6[0])  # Note axis twiddling and little endian
         self._mag._ivector[0] = bytes_toint(self.buf6[3], self.buf6[2])
         self._mag._ivector[2] = -bytes_toint(self.buf6[5], self.buf6[4])
-        scale = 0.15                            # scale is 0.15uT/LSB
-        self._mag._vector[0] = self._mag._ivector[0]*self.mag_correction[0]*scale
-        self._mag._vector[1] = self._mag._ivector[1]*self.mag_correction[1]*scale
-        self._mag._vector[2] = self._mag._ivector[2]*self.mag_correction[2]*scale
+        scale = 6                            # scale is 0.15uT/LSB
+        self._mag._vector[0] = self._mag._ivector[0]*self.mag_correction[0]//scale
+        self._mag._vector[1] = self._mag._ivector[1]*self.mag_correction[1]//scale
+        self._mag._vector[2] = self._mag._ivector[2]*self.mag_correction[2]//scale
         self._mag_stale_count = 0
 
     @property

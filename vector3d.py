@@ -101,26 +101,6 @@ class Vector3d(object):
         return (self._calvector[self._transpose[0]] * self._scale[0],
                 self._calvector[self._transpose[1]] * self._scale[1],
                 self._calvector[self._transpose[2]] * self._scale[2])
-'''
-    @property
-    def magnitude(self):
-        x, y, z = self.xyz  # All measurements must correspond to the same instant
-        return sqrt(x**2 + y**2 + z**2)
-
-    @property
-    def inclination(self):
-        x, y, z = self.xyz
-        return degrees(acos(z / sqrt(x**2 + y**2 + z**2)))
-
-    @property
-    def elevation(self):
-        return 90 - self.inclination
-
-    @property
-    def azimuth(self):
-        x, y, z = self.xyz
-        return degrees(atan2(y, x))
-'''
     # Raw uncorrected integer values from sensor
     @property
     def ix(self):
