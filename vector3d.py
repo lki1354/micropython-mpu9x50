@@ -23,8 +23,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 '''
 
-import pyb
-from math import sqrt, degrees, acos, atan2
+import machine
+#from math import sqrt, degrees, acos, atan2
 
 
 def default_wait():
@@ -71,7 +71,7 @@ class Vector3d(object):
             self.update()
             maxvec = list(map(max, maxvec, self._vector))
             minvec = list(map(min, minvec, self._vector))
-        self.cal = tuple(map(lambda a, b: (a + b)/2, maxvec, minvec))
+        self.cal = tuple(map(lambda a, b: (a + b)//2, maxvec, minvec))
 
     @property
     def _calvector(self):
@@ -101,7 +101,7 @@ class Vector3d(object):
         return (self._calvector[self._transpose[0]] * self._scale[0],
                 self._calvector[self._transpose[1]] * self._scale[1],
                 self._calvector[self._transpose[2]] * self._scale[2])
-
+'''
     @property
     def magnitude(self):
         x, y, z = self.xyz  # All measurements must correspond to the same instant
@@ -120,7 +120,7 @@ class Vector3d(object):
     def azimuth(self):
         x, y, z = self.xyz
         return degrees(atan2(y, x))
-
+'''
     # Raw uncorrected integer values from sensor
     @property
     def ix(self):

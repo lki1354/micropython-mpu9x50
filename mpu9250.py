@@ -70,7 +70,7 @@ class MPU9250(InvenSenseMPU):
             self._read(self.buf2, 0x41, self.mpu_addr)
         except OSError:
             raise MPUException(self._I2Cerror)
-        return bytes_toint(self.buf2[0], self.buf2[1])/333.87 + 21  # I think
+        return bytes_toint(self.buf2[0], self.buf2[1])//333.87 + 21  # I think
 
     # Low pass filters
     @property
@@ -148,9 +148,9 @@ class MPU9250(InvenSenseMPU):
             self._write(0x16, 0x0A, self._mag_addr)      # 16 bit (0.15uT/LSB not 0.015), mode 2
         except OSError:
             raise MPUException(self._I2Cerror)
-        mag_x = (0.5*(self.buf3[0] - 128))/128 + 1
-        mag_y = (0.5*(self.buf3[1] - 128))/128 + 1
-        mag_z = (0.5*(self.buf3[2] - 128))/128 + 1
+        mag_x = (0.5*(self.buf3[0] - 128))//128 + 1
+        mag_y = (0.5*(self.buf3[1] - 128))//128 + 1
+        mag_z = (0.5*(self.buf3[2] - 128))//128 + 1
         return (mag_x, mag_y, mag_z)
 
     @property

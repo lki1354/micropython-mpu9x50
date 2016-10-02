@@ -37,7 +37,8 @@ THE SOFTWARE.
 # At runtime try to continue returning last good data value. We don't want aircraft
 # crashing. However if the I2C has crashed we're probably stuffed.
 
-import pyb
+from machine import I2C
+import utime
 from vector3d import Vector3d
 
 
@@ -67,7 +68,7 @@ class InvenSenseMPU(object):
 
     _I2Cerror = "I2C failure when communicating with IMU"
 
-    def __init__(self, side_str, device_addr, transposition, scaling):
+    def __init__(self, pins, device_addr, transposition, scaling):
 
         self._accel = Vector3d(transposition, scaling, self._accel_callback)
         self._gyro = Vector3d(transposition, scaling, self._gyro_callback)
@@ -77,17 +78,13 @@ class InvenSenseMPU(object):
         self.buf6 = bytearray([0]*6)
         self.timeout = 10                       # I2C tieout mS
 
-        tim = pyb.millis()                      # Ensure PSU and device have settled
+        tim = utime.ticks_ms()                     # Ensure PSU and device have settled
         if tim < 200:
-            pyb.delay(200-tim)
-        if type(side_str) is str:
-            sst = side_str.upper()
-            if sst in {'X', 'Y'}:
-                self._mpu_i2c = pyb.I2C(sst, pyb.I2C.MASTER)
-            else:
-                raise ValueError('I2C side must be X or Y')
-        elif type(side_str) is pyb.I2C:
-            self._mpu_i2c = side_str
+            utime.sleep(200-tim)
+        if type(pins) is tuple:
+            self._mpu_i2c = I2C(0, I2C.MASTER, baudrate=400000,pins=pins)
+        else:
+            raise ValueError('I2C Pins are missing')
 
         if device_addr is None:
             devices = set(self._mpu_i2c.scan())
@@ -116,14 +113,14 @@ class InvenSenseMPU(object):
         '''
         Read bytes to pre-allocated buffer Caller traps OSError.
         '''
-        self._mpu_i2c.mem_read(buf, addr, memaddr, timeout=self.timeout)
+        self._mpu_i2c.readfrom_mem_into(addr,memaddr,buf)
 
     # write to device
     def _write(self, data, memaddr, addr):
         '''
         Perform a memory write. Caller should trap OSError.
         '''
-        self._mpu_i2c.mem_write(data, addr, memaddr, timeout=self.timeout)
+        self._mpu_i2c.writeto_mem(addr , memaddr,data)
 
     # wake
     def wake(self):
@@ -298,9 +295,9 @@ class InvenSenseMPU(object):
         self._accel._ivector[1] = bytes_toint(self.buf6[2], self.buf6[3])
         self._accel._ivector[2] = bytes_toint(self.buf6[4], self.buf6[5])
         scale = (16384, 8192, 4096, 2048)
-        self._accel._vector[0] = self._accel._ivector[0]/scale[self.accel_range]
-        self._accel._vector[1] = self._accel._ivector[1]/scale[self.accel_range]
-        self._accel._vector[2] = self._accel._ivector[2]/scale[self.accel_range]
+        self._accel._vector[0] = self._accel._ivector[0]//scale[self.accel_range]
+        self._accel._vector[1] = self._accel._ivector[1]//scale[self.accel_range]
+        self._accel._vector[2] = self._accel._ivector[2]//scale[self.accel_range]
 
     def get_accel_irq(self):
         '''
@@ -331,10 +328,10 @@ class InvenSenseMPU(object):
         self._gyro._ivector[0] = bytes_toint(self.buf6[0], self.buf6[1])
         self._gyro._ivector[1] = bytes_toint(self.buf6[2], self.buf6[3])
         self._gyro._ivector[2] = bytes_toint(self.buf6[4], self.buf6[5])
-        scale = (131, 65.5, 32.8, 16.4)
-        self._gyro._vector[0] = self._gyro._ivector[0]/scale[self.gyro_range]
-        self._gyro._vector[1] = self._gyro._ivector[1]/scale[self.gyro_range]
-        self._gyro._vector[2] = self._gyro._ivector[2]/scale[self.gyro_range]
+        scale = (131, 65, 32, 16)
+        self._gyro._vector[0] = self._gyro._ivector[0]//scale[self.gyro_range]
+        self._gyro._vector[1] = self._gyro._ivector[1]//scale[self.gyro_range]
+        self._gyro._vector[2] = self._gyro._ivector[2]//scale[self.gyro_range]
 
     def get_gyro_irq(self):
         '''
