@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 '''
 
-import pyb
+#import pyb
 from math import sqrt, degrees, acos, atan2
 
 
@@ -31,7 +31,7 @@ def default_wait():
     '''
     delay of 50 ms
     '''
-    pyb.delay(50)
+    #pyb.delay(50)
 
 
 class Vector3d(object):

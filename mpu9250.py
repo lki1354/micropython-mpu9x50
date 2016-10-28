@@ -98,7 +98,9 @@ class MPU9250(InvenSenseMPU):
         """
         if filt in range(8):
             try:
-                self._write(filt, 0x1A, self.mpu_addr)
+                value = bytearray(1)
+                value[0] = filt
+                self._write(value, 0x1A, self.mpu_addr)
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -129,7 +131,9 @@ class MPU9250(InvenSenseMPU):
         """
         if filt in range(8):
             try:
-                self._write(filt, 0x1D, self.mpu_addr)
+                value = bytearray(1)
+                value[0] = filt
+                self._write(value, 0x1D, self.mpu_addr)
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -141,11 +145,16 @@ class MPU9250(InvenSenseMPU):
         Mode 1 is 8Hz mode 2 is 100Hz repetition
         returns correction values
         """
+        value = bytearray(1)
+        value[0] = 0
         try:
-            self._write(0x0F, 0x0A, self._mag_addr)      # fuse ROM access mode
+            value[0] = 0x0F
+            self._write(value, 0x0A, self._mag_addr)      # fuse ROM access mode
             self._read(self.buf3, 0x10, self._mag_addr)  # Correction values
-            self._write(0, 0x0A, self._mag_addr)         # Power down mode (AK8963 manual 6.4.6)
-            self._write(0x16, 0x0A, self._mag_addr)      # 16 bit (0.15uT/LSB not 0.015), mode 2
+            value[0] = 0x00
+            self._write(value, 0x0A, self._mag_addr)         # Power down mode (AK8963 manual 6.4.6)
+            value[0] = 0x16
+            self._write(value, 0x0A, self._mag_addr)      # 16 bit (0.15uT/LSB not 0.015), mode 2
         except OSError:
             raise MPUException(self._I2Cerror)
         mag_x = (0.5*(self.buf3[0] - 128))/128 + 1
