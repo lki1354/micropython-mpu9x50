@@ -98,17 +98,19 @@ class InvenSenseMPU(object):
         """
         Perform a memory write. Caller should trap OSError.
         """
-        self._mpu_interface.writeto_mem(addr, memaddr, data)
-
+        if type(data) is bytearray:
+            self._mpu_interface.writeto_mem(addr, memaddr, data)
+        else:
+            value = bytearray(1)
+            value[0] = data
+            self._mpu_interface.writeto_mem(addr,memaddr,value)
     # wake
     def wake(self):
         """
         Wakes the device.
         """
-        value = bytearray(1)
-        value[0] = 0x01
         try:
-            self._write(value, 0x6B, self.mpu_addr)  # Use best clock source
+            self._write(0x01, 0x6B, self.mpu_addr)  # Use best clock source
         except OSError:
             raise MPUException(self._I2Cerror)
         return 'awake'
@@ -118,10 +120,8 @@ class InvenSenseMPU(object):
         """
         Sets the device to sleep mode.
         """
-        value = bytearray(1)
-        value[0] = 0x40
         try:
-            self._write(value, 0x6B, self.mpu_addr)
+            self._write(0x40, 0x6B, self.mpu_addr)
         except OSError:
             raise MPUException(self._I2Cerror)
         return 'asleep'
@@ -157,13 +157,11 @@ class InvenSenseMPU(object):
         """
         Sets passthrough mode True or False
         """
-        value = bytearray(1)
         if type(mode) is bool:
-            value[0] = 2 if mode else 0
+            val = 2 if mode else 0
             try:
-                self._write(value, 0x37, self.mpu_addr)  # I think this is right.
-                value[0] = 0x00
-                self._write(value, 0x6A, self.mpu_addr)
+                self._write(val, 0x37, self.mpu_addr)  # I think this is right.
+                self._write(0x00, 0x6A, self.mpu_addr)
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -191,9 +189,7 @@ class InvenSenseMPU(object):
         if rate < 0 or rate > 255:
             raise ValueError("Rate must be in range 0-255")
         try:
-            value = bytearray(1)
-            value[0] = rate
-            self._write(value, 0x19, self.mpu_addr)
+            self._write(rate, 0x19, self.mpu_addr)
         except OSError:
             raise MPUException(self._I2Cerror)
 
@@ -222,9 +218,7 @@ class InvenSenseMPU(object):
         ar_bytes = (0x00, 0x08, 0x10, 0x18)
         if accel_range in range(len(ar_bytes)):
             try:
-                value = bytearray(1)
-                value[0] = ar_bytes[accel_range]
-                self._write(value, 0x1C, self.mpu_addr)
+                self._write(ar_bytes[accel_range], 0x1C, self.mpu_addr)
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -256,9 +250,7 @@ class InvenSenseMPU(object):
         gr_bytes = (0x00, 0x08, 0x10, 0x18)
         if gyro_range in range(len(gr_bytes)):
             try:
-                value = bytearray(1)
-                value[0] = gr_bytes[gyro_range]
-                self._write(value, 0x1B, self.mpu_addr)  # Sets fchoice = b11 which enables filter
+                self._write(gr_bytes[gyro_range], 0x1B, self.mpu_addr)  # Sets fchoice = b11 which enables filter
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:

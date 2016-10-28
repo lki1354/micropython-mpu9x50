@@ -12,6 +12,7 @@ i2c = I2C(0, I2C.MASTER, baudrate=400000)
 imu = MPU9250(i2c)
 print("You should see slightly different values on each pair of readings.")
 
+
 def delay(time_ms):
     time_continue = utime.ticks_ms() + time_ms
     time_now = utime.ticks_ms()
