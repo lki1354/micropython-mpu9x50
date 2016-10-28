@@ -2,7 +2,7 @@
 # Authors Peter Hinch, Sebastian Plamauer
 # V0.5 17th June 2015
 
-'''
+"""
 mpu9250 is a micropython module for the InvenSense MPU9250 sensor.
 It measures acceleration, turn rate and the magnetic field in three axis.
 
@@ -23,29 +23,29 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-'''
+"""
 
 from imu import InvenSenseMPU, bytes_toint, MPUException
 from vector3d import Vector3d
 
 
 class MPU9250(InvenSenseMPU):
-    '''
+    """
     MPU9250 constructor arguments
     1. side_str 'X' or 'Y' depending on the Pyboard I2C interface being used
     2. optional device_addr 0, 1 depending on the voltage applied to pin AD0 (Drotek default is 1)
        if None driver will scan for a device (if one device only is on bus)
     3, 4. transposition, scaling optional 3-tuples allowing for outputs to be based on vehicle
           coordinates rather than those of the sensor itself. See readme.
-    '''
+    """
 
     _mpu_addr = (104, 105)  # addresses of MPU9250 determined by voltage on pin AD0
     _mag_addr = 12          # Magnetometer address
     _chip_id = 113
 
-    def __init__(self, side_str, device_addr=None, transposition=(0, 1, 2), scaling=(1, 1, 1)):
+    def __init__(self, interface, device_addr=0, transposition=(0, 1, 2), scaling=(1, 1, 1)):
 
-        super().__init__(side_str, device_addr, transposition, scaling)
+        super().__init__(interface, device_addr, transposition, scaling)
         self._mag = Vector3d(transposition, scaling, self._mag_callback)
         self.accel_filter_range = 0             # fast filtered response
         self.gyro_filter_range = 0
@@ -55,17 +55,17 @@ class MPU9250(InvenSenseMPU):
 
     @property
     def sensors(self):
-        '''
+        """
         returns sensor objects accel, gyro and mag
-        '''
+        """
         return self._accel, self._gyro, self._mag
 
     # get temperature
     @property
     def temperature(self):
-        '''
+        """
         Returns the temperature in degree C.
-        '''
+        """
         try:
             self._read(self.buf2, 0x41, self.mpu_addr)
         except OSError:
@@ -75,12 +75,12 @@ class MPU9250(InvenSenseMPU):
     # Low pass filters
     @property
     def gyro_filter_range(self):
-        '''
+        """
         Returns the gyro and temperature sensor low pass filter cutoff frequency
         Pass:               0   1   2   3   4   5   6   7
         Cutoff (Hz):        250 184 92  41  20  10  5   3600
         Sample rate (KHz):  8   1   1   1   1   1   1   8
-        '''
+        """
         try:
             self._read(self.buf1, 0x1A, self.mpu_addr)
             res = self.buf1[0] & 7
@@ -90,12 +90,12 @@ class MPU9250(InvenSenseMPU):
 
     @gyro_filter_range.setter
     def gyro_filter_range(self, filt):
-        '''
+        """
         Sets the gyro and temperature sensor low pass filter cutoff frequency
         Pass:               0   1   2   3   4   5   6   7
         Cutoff (Hz):        250 184 92  41  20  10  5   3600
         Sample rate (KHz):  8   1   1   1   1   1   1   8
-        '''
+        """
         if filt in range(8):
             try:
                 self._write(filt, 0x1A, self.mpu_addr)
@@ -106,12 +106,12 @@ class MPU9250(InvenSenseMPU):
 
     @property
     def accel_filter_range(self):
-        '''
+        """
         Returns the accel low pass filter cutoff frequency
         Pass:               0   1   2   3   4   5   6   7 BEWARE 7 doesn't work on device I tried.
         Cutoff (Hz):        460 184 92  41  20  10  5   460
         Sample rate (KHz):  1   1   1   1   1   1   1   1
-        '''
+        """
         try:
             self._read(self.buf1, 0x1D, self.mpu_addr)
             res = self.buf1[0] & 7
@@ -121,12 +121,12 @@ class MPU9250(InvenSenseMPU):
 
     @accel_filter_range.setter
     def accel_filter_range(self, filt):
-        '''
+        """
         Sets the accel low pass filter cutoff frequency
         Pass:               0   1   2   3   4   5   6   7 BEWARE 7 doesn't work on device I tried.
         Cutoff (Hz):        460 184 92  41  20  10  5   460
         Sample rate (KHz):  1   1   1   1   1   1   1   1
-        '''
+        """
         if filt in range(8):
             try:
                 self._write(filt, 0x1D, self.mpu_addr)
@@ -136,11 +136,11 @@ class MPU9250(InvenSenseMPU):
             raise ValueError('Filter coefficient must be between 0 and 7')
 
     def _magsetup(self):                        # mode 2 100Hz continuous reads, 16 bit
-        '''
+        """
         Magnetometer initialisation: use 16 bit continuous mode.
         Mode 1 is 8Hz mode 2 is 100Hz repetition
         returns correction values
-        '''
+        """
         try:
             self._write(0x0F, 0x0A, self._mag_addr)      # fuse ROM access mode
             self._read(self.buf3, 0x10, self._mag_addr)  # Correction values
@@ -155,15 +155,15 @@ class MPU9250(InvenSenseMPU):
 
     @property
     def mag(self):
-        '''
+        """
         Magnetomerte object
-        '''
+        """
         return self._mag
 
     def _mag_callback(self):
-        '''
+        """
         Update magnetometer Vector3d object (if data available)
-        '''
+        """
         try:                                    # If read fails, returns last valid data and
             self._read(self.buf1, 0x02, self._mag_addr)  # increments mag_stale_count
             if self.buf1[0] & 1 == 0:
@@ -186,15 +186,15 @@ class MPU9250(InvenSenseMPU):
 
     @property
     def mag_stale_count(self):
-        '''
+        """
         Number of consecutive times where old data was returned
-        '''
+        """
         return self._mag_stale_count
 
     def get_mag_irq(self):
-        '''
+        """
         Uncorrected values because floating point uses heap
-        '''
+        """
         self._read(self.buf1, 0x02, self._mag_addr)
         if self.buf1[0] == 1:                   # Data is ready
             self._read(self.buf6, 0x03, self._mag_addr)
