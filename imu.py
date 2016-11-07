@@ -37,8 +37,8 @@ THE SOFTWARE.
 # At runtime try to continue returning last good data value. We don't want aircraft
 # crashing. However if the I2C has crashed we're probably stuffed.
 
-#from machine import I2C
 from vector3d import Vector3d
+from hal import I2C
 
 
 class MPUException(OSError):
@@ -67,7 +67,7 @@ class InvenSenseMPU(object):
 
     _I2Cerror = "I2C failure when communicating with IMU"
 
-    def __init__(self, interface, device_addr, transposition, scaling):
+    def __init__(self, device_addr, transposition, scaling):
 
         self._accel = Vector3d(transposition, scaling, self._accel_callback)
         self._gyro = Vector3d(transposition, scaling, self._gyro_callback)
@@ -78,7 +78,7 @@ class InvenSenseMPU(object):
         self.timeout = 10                       # I2C tieout mS
 
         self.mpu_addr = self._mpu_addr[device_addr]
-        self._mpu_interface = interface
+        self._mpu_interface = I2C(self.mpu_addr)
         self.chip_id()                    # Test communication by reading chip_id: throws exception on error
         # Can communicate with chip. Set it up.
         self.wake()                             # wake it up
@@ -91,19 +91,17 @@ class InvenSenseMPU(object):
         """
         Read bytes to pre-allocated buffer Caller traps OSError.
         """
-        self._mpu_interface.readfrom_mem_into(addr, memaddr, buf)   # todo check use of timeout
+        self._mpu_interface.readbsfr(memaddr, buf)   # todo check use of timeout
 
     # write to device
-    def _write(self, data, memaddr, addr):
+    def _write(self, data, memaddr):
         """
         Perform a memory write. Caller should trap OSError.
         """
         if type(data) is bytearray:
-            self._mpu_interface.writeto_mem(addr, memaddr, data)
+            self._mpu_interface.write_bstr(memaddr, data)
         else:
-            value = bytearray(1)
-            value[0] = data
-            self._mpu_interface.writeto_mem(addr,memaddr,value)
+            self._mpu_interface.write_btr(memaddr, data)
     # wake
     def wake(self):
         """

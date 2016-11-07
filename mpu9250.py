@@ -43,9 +43,9 @@ class MPU9250(InvenSenseMPU):
     _mag_addr = 12          # Magnetometer address
     _chip_id = 113
 
-    def __init__(self, interface, device_addr=0, transposition=(0, 1, 2), scaling=(1, 1, 1)):
+    def __init__(self, device_addr=0, transposition=(0, 1, 2), scaling=(1, 1, 1)):
 
-        super().__init__(interface, device_addr, transposition, scaling)
+        super().__init__(device_addr, transposition, scaling)
         self._mag = Vector3d(transposition, scaling, self._mag_callback)
         self.accel_filter_range = 0             # fast filtered response
         self.gyro_filter_range = 0
@@ -98,9 +98,7 @@ class MPU9250(InvenSenseMPU):
         """
         if filt in range(8):
             try:
-                value = bytearray(1)
-                value[0] = filt
-                self._write(value, 0x1A, self.mpu_addr)
+                self._write(filt, 0x1A, self.mpu_addr)
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:

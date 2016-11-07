@@ -3,7 +3,7 @@
 
 # V0.6 18th June 2015
 
-'''
+"""
 The MIT License (MIT)
 Copyright (c) 2014 Sebastian Plamauer, oeplse@gmail.com, Peter Hinch
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,25 +21,25 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-'''
+"""
 
-#import pyb
 from math import sqrt, degrees, acos, atan2
+from time import sleep
 
 
 def default_wait():
-    '''
+    """
     delay of 50 ms
-    '''
-    #pyb.delay(50)
+    """
+    sleep(0.05)
 
 
 class Vector3d(object):
-    '''
+    """
     Represents a vector in a 3D space using Cartesian coordinates.
     Internally uses sensor relative coordinates.
     Returns vehicle-relative x, y and z values.
-    '''
+    """
     def __init__(self, transposition, scaling, update_function):
         self._vector = [0, 0, 0]
         self._ivector = [0, 0, 0]
@@ -53,16 +53,16 @@ class Vector3d(object):
         self.update = update_function
 
     def argcheck(self, arg, name):
-        '''
+        """
         checks if arguments are of correct length
-        '''
+        """
         if len(arg) != 3 or not (type(arg) is list or type(arg) is tuple):
             raise ValueError(name + ' must be a 3 element list or tuple')
 
     def calibrate(self, stopfunc, waitfunc=default_wait):
-        '''
+        """
         calibration routine, sets cal
-        '''
+        """
         self.update()
         maxvec = self._vector[:]                # Initialise max and min lists with current values
         minvec = self._vector[:]
@@ -75,9 +75,9 @@ class Vector3d(object):
 
     @property
     def _calvector(self):
-        '''
+        """
         Vector adjusted for calibration offsets
-        '''
+        """
         return list(map(lambda val, offset: val - offset, self._vector, self.cal))
 
     @property
