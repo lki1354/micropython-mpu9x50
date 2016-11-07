@@ -108,7 +108,7 @@ class InvenSenseMPU(object):
         Wakes the device.
         """
         try:
-            self._write(0x01, 0x6B, self.mpu_addr)  # Use best clock source
+            self._write(0x01, 0x6B)  # Use best clock source
         except OSError:
             raise MPUException(self._I2Cerror)
         return 'awake'
@@ -119,7 +119,7 @@ class InvenSenseMPU(object):
         Sets the device to sleep mode.
         """
         try:
-            self._write(0x40, 0x6B, self.mpu_addr)
+            self._write(0x40, 0x6B)
         except OSError:
             raise MPUException(self._I2Cerror)
         return 'asleep'
@@ -130,7 +130,7 @@ class InvenSenseMPU(object):
         Returns Chip ID
         """
         try:
-            self._read(self.buf1, 0x75, self.mpu_addr)
+            self._read(self.buf1, 0x75)
         except OSError:
             raise MPUException(self._I2Cerror)
         chip_id = int(self.buf1[0])
@@ -145,7 +145,7 @@ class InvenSenseMPU(object):
         Returns passthrough mode True or False
         """
         try:
-            self._read(self.buf1, 0x37, self.mpu_addr)
+            self._read(self.buf1, 0x37)
             return self.buf1[0] & 0x02 > 0
         except OSError:
             raise MPUException(self._I2Cerror)
@@ -158,8 +158,8 @@ class InvenSenseMPU(object):
         if type(mode) is bool:
             val = 2 if mode else 0
             try:
-                self._write(val, 0x37, self.mpu_addr)  # I think this is right.
-                self._write(0x00, 0x6A, self.mpu_addr)
+                self._write(val, 0x37)  # I think this is right.
+                self._write(0x00, 0x6A)
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -174,7 +174,7 @@ class InvenSenseMPU(object):
         default rate is zero i.e. sample at internal rate.
         """
         try:
-            self._read(self.buf1, 0x19, self.mpu_addr)
+            self._read(self.buf1, 0x19)
             return self.buf1[0]
         except OSError:
             raise MPUException(self._I2Cerror)
@@ -187,7 +187,7 @@ class InvenSenseMPU(object):
         if rate < 0 or rate > 255:
             raise ValueError("Rate must be in range 0-255")
         try:
-            self._write(rate, 0x19, self.mpu_addr)
+            self._write(rate, 0x19)
         except OSError:
             raise MPUException(self._I2Cerror)
 
@@ -200,7 +200,7 @@ class InvenSenseMPU(object):
         for range +/-:      2   4   8   16  g
         """
         try:
-            self._read(self.buf1, 0x1C, self.mpu_addr)
+            self._read(self.buf1, 0x1C)
             ari = self.buf1[0]//8
         except OSError:
             raise MPUException(self._I2Cerror)
@@ -216,7 +216,7 @@ class InvenSenseMPU(object):
         ar_bytes = (0x00, 0x08, 0x10, 0x18)
         if accel_range in range(len(ar_bytes)):
             try:
-                self._write(ar_bytes[accel_range], 0x1C, self.mpu_addr)
+                self._write(ar_bytes[accel_range], 0x1C)
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -232,7 +232,7 @@ class InvenSenseMPU(object):
         """
         # set range
         try:
-            self._read(self.buf1, 0x1B, self.mpu_addr)
+            self._read(self.buf1, 0x1B)
             gri = self.buf1[0]//8
         except OSError:
             raise MPUException(self._I2Cerror)
@@ -248,7 +248,7 @@ class InvenSenseMPU(object):
         gr_bytes = (0x00, 0x08, 0x10, 0x18)
         if gyro_range in range(len(gr_bytes)):
             try:
-                self._write(gr_bytes[gyro_range], 0x1B, self.mpu_addr)  # Sets fchoice = b11 which enables filter
+                self._write(gr_bytes[gyro_range], 0x1B)  # Sets fchoice = b11 which enables filter
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -267,7 +267,7 @@ class InvenSenseMPU(object):
         Update accelerometer Vector3d object
         """
         try:
-            self._read(self.buf6, 0x3B, self.mpu_addr)
+            self._read(self.buf6, 0x3B)
         except OSError:
             raise MPUException(self._I2Cerror)
         self._accel._ivector[0] = bytes_toint(self.buf6[0], self.buf6[1])
@@ -283,7 +283,7 @@ class InvenSenseMPU(object):
         For use in interrupt handlers. Sets self._accel._ivector[] to signed
         unscaled integer accelerometer values
         """
-        self._read(self.buf6, 0x3B, self.mpu_addr)
+        self._read(self.buf6, 0x3B)
         self._accel._ivector[0] = bytes_toint(self.buf6[0], self.buf6[1])
         self._accel._ivector[1] = bytes_toint(self.buf6[2], self.buf6[3])
         self._accel._ivector[2] = bytes_toint(self.buf6[4], self.buf6[5])
@@ -301,7 +301,7 @@ class InvenSenseMPU(object):
         Update gyroscope Vector3d object
         """
         try:
-            self._read(self.buf6, 0x43, self.mpu_addr)
+            self._read(self.buf6, 0x43)
         except OSError:
             raise MPUException(self._I2Cerror)
         self._gyro._ivector[0] = bytes_toint(self.buf6[0], self.buf6[1])
@@ -317,7 +317,7 @@ class InvenSenseMPU(object):
         For use in interrupt handlers. Sets self._gyro._ivector[] to signed
         unscaled integer gyro values. Error trapping disallowed.
         """
-        self._read(self.buf6, 0x43, self.mpu_addr)
+        self._read(self.buf6, 0x43)
         self._gyro._ivector[0] = bytes_toint(self.buf6[0], self.buf6[1])
         self._gyro._ivector[1] = bytes_toint(self.buf6[2], self.buf6[3])
         self._gyro._ivector[2] = bytes_toint(self.buf6[4], self.buf6[5])

@@ -67,7 +67,7 @@ class MPU9250(InvenSenseMPU):
         Returns the temperature in degree C.
         """
         try:
-            self._read(self.buf2, 0x41, self.mpu_addr)
+            self._read(self.buf2, 0x41)
         except OSError:
             raise MPUException(self._I2Cerror)
         return bytes_toint(self.buf2[0], self.buf2[1])/333.87 + 21  # I think
@@ -82,7 +82,7 @@ class MPU9250(InvenSenseMPU):
         Sample rate (KHz):  8   1   1   1   1   1   1   8
         """
         try:
-            self._read(self.buf1, 0x1A, self.mpu_addr)
+            self._read(self.buf1, 0x1A)
             res = self.buf1[0] & 7
         except OSError:
             raise MPUException(self._I2Cerror)
@@ -98,7 +98,7 @@ class MPU9250(InvenSenseMPU):
         """
         if filt in range(8):
             try:
-                self._write(filt, 0x1A, self.mpu_addr)
+                self._write(filt, 0x1A)
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -113,7 +113,7 @@ class MPU9250(InvenSenseMPU):
         Sample rate (KHz):  1   1   1   1   1   1   1   1
         """
         try:
-            self._read(self.buf1, 0x1D, self.mpu_addr)
+            self._read(self.buf1, 0x1D)
             res = self.buf1[0] & 7
         except OSError:
             raise MPUException(self._I2Cerror)
@@ -129,7 +129,7 @@ class MPU9250(InvenSenseMPU):
         """
         if filt in range(8):
             try:
-                self._write(filt, 0x1D, self.mpu_addr)
+                self._write(filt, 0x1D)
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -141,13 +141,15 @@ class MPU9250(InvenSenseMPU):
         Mode 1 is 8Hz mode 2 is 100Hz repetition
         returns correction values
         """
+        self._mpu_interface.device_address=self._mag_addr
         try:
-            self._write(0x0F, 0x0A, self._mag_addr)      # fuse ROM access mode
-            self._read(self.buf3, 0x10, self._mag_addr)  # Correction values
-            self._write(0, 0x0A, self._mag_addr)         # Power down mode (AK8963 manual 6.4.6)
-            self._write(0x16, 0x0A, self._mag_addr)      # 16 bit (0.15uT/LSB not 0.015), mode 2
+            self._write(0x0F, 0x0A)      # fuse ROM access mode
+            self._read(self.buf3, 0x10)  # Correction values
+            self._write(0, 0x0A)         # Power down mode (AK8963 manual 6.4.6)
+            self._write(0x16, 0x0A)      # 16 bit (0.15uT/LSB not 0.015), mode 2
         except OSError:
             raise MPUException(self._I2Cerror)
+        self._mpu_interface.device_address=self._mpu_addr
         mag_x = (0.5*(self.buf3[0] - 128))/128 + 1
         mag_y = (0.5*(self.buf3[1] - 128))/128 + 1
         mag_z = (0.5*(self.buf3[2] - 128))/128 + 1
@@ -164,6 +166,7 @@ class MPU9250(InvenSenseMPU):
         """
         Update magnetometer Vector3d object (if data available)
         """
+        self._mpu_interface.device_address=self._mag_addr
         try:                                    # If read fails, returns last valid data and
             self._read(self.buf1, 0x02, self._mag_addr)  # increments mag_stale_count
             if self.buf1[0] & 1 == 0:
@@ -172,6 +175,7 @@ class MPU9250(InvenSenseMPU):
             self._read(self.buf1, 0x09, self._mag_addr)
         except OSError:
             raise MPUException(self._I2Cerror)
+        self._mpu_interface.device_address=self._mpu_addr
         if self.buf1[0] & 0x08 > 0:             # An overflow has occurred
             self._mag_stale_count += 1          # Error conditions retain last good value
             return                              # user should check for ever increasing stale_counts
@@ -195,6 +199,7 @@ class MPU9250(InvenSenseMPU):
         """
         Uncorrected values because floating point uses heap
         """
+        self._mpu_interface.device_address=self._mag_addr
         self._read(self.buf1, 0x02, self._mag_addr)
         if self.buf1[0] == 1:                   # Data is ready
             self._read(self.buf6, 0x03, self._mag_addr)
@@ -204,3 +209,4 @@ class MPU9250(InvenSenseMPU):
                 self._mag._ivector[1] = bytes_toint(self.buf6[1], self.buf6[0])
                 self._mag._ivector[0] = bytes_toint(self.buf6[3], self.buf6[2])
                 self._mag._ivector[2] = -bytes_toint(self.buf6[5], self.buf6[4])
+        self._mpu_interface.device_address=self._mpu_addr
