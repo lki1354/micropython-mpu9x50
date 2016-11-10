@@ -149,7 +149,7 @@ class MPU9250(InvenSenseMPU):
             self._write(0x16, 0x0A)      # 16 bit (0.15uT/LSB not 0.015), mode 2
         except OSError:
             raise MPUException(self._I2Cerror)
-        self._mpu_interface.device_address=self._mpu_addr
+        self._mpu_interface.device_address=self.mpu_addr
         mag_x = (0.5*(self.buf3[0] - 128))/128 + 1
         mag_y = (0.5*(self.buf3[1] - 128))/128 + 1
         mag_z = (0.5*(self.buf3[2] - 128))/128 + 1
@@ -168,14 +168,14 @@ class MPU9250(InvenSenseMPU):
         """
         self._mpu_interface.device_address=self._mag_addr
         try:                                    # If read fails, returns last valid data and
-            self._read(self.buf1, 0x02, self._mag_addr)  # increments mag_stale_count
+            self._read(self.buf1, 0x02)  # increments mag_stale_count
             if self.buf1[0] & 1 == 0:
                 return self._mag                # Data not ready: return last value
-            self._read(self.buf6, 0x03, self._mag_addr)
-            self._read(self.buf1, 0x09, self._mag_addr)
+            self._read(self.buf6, 0x03)
+            self._read(self.buf1, 0x09)
         except OSError:
             raise MPUException(self._I2Cerror)
-        self._mpu_interface.device_address=self._mpu_addr
+        self._mpu_interface.device_address=self.mpu_addr
         if self.buf1[0] & 0x08 > 0:             # An overflow has occurred
             self._mag_stale_count += 1          # Error conditions retain last good value
             return                              # user should check for ever increasing stale_counts
@@ -200,13 +200,13 @@ class MPU9250(InvenSenseMPU):
         Uncorrected values because floating point uses heap
         """
         self._mpu_interface.device_address=self._mag_addr
-        self._read(self.buf1, 0x02, self._mag_addr)
+        self._read(self.buf1, 0x02)
         if self.buf1[0] == 1:                   # Data is ready
-            self._read(self.buf6, 0x03, self._mag_addr)
-            self._read(self.buf1, 0x09, self._mag_addr)    # Mandatory status2 read
+            self._read(self.buf6, 0x03)
+            self._read(self.buf1, 0x09)    # Mandatory status2 read
             self._mag._ivector[1] = 0
             if self.buf1[0] & 0x08 == 0:        # No overflow has occurred
                 self._mag._ivector[1] = bytes_toint(self.buf6[1], self.buf6[0])
                 self._mag._ivector[0] = bytes_toint(self.buf6[3], self.buf6[2])
                 self._mag._ivector[2] = -bytes_toint(self.buf6[5], self.buf6[4])
-        self._mpu_interface.device_address=self._mpu_addr
+        self._mpu_interface.device_address=self.mpu_addr

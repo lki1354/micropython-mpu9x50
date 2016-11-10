@@ -6,7 +6,7 @@ class I2CWiPy2(I2c):
 
     """
     def __init__(self, address, pins=('P9', 'P10'), baudrate=400000):
-        super().__init(0, pins=pins, baudrate=baudrate)
+        super().__init__(0, pins=pins, baudrate=baudrate)
         self.__address = address
         self.buffer1 = bytearray(1)
 

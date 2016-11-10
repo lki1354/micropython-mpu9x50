@@ -10,7 +10,8 @@ MRAA_I2C_FAST = 1 #/**< up to 400Khz */
 MRAA_I2C_HIGH = 2  #/**< up to 3.4Mhz */
     """
     def __init__(self, address, bus=1, frequency=1):
-        super().__init(bus)
+        I2c.__init__(self,bus)
+        #super().__init__(bus)
         self.address(address)
         self.frequency(frequency)
 
@@ -23,7 +24,7 @@ MRAA_I2C_HIGH = 2  #/**< up to 3.4Mhz */
         self.address(value)
 
     def read_bsfr(self, memaddr, buf):
-        self.readBytesReg(memaddr, buf)
+        buf[:] = self.readBytesReg(memaddr, len(buf))
 
     def write_btr(self, memaddr, data):
         self.writeReg(memaddr, data)

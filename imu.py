@@ -66,6 +66,8 @@ class InvenSenseMPU(object):
     """
 
     _I2Cerror = "I2C failure when communicating with IMU"
+    _accel_range = None
+    _gyro_range = None                    # Likewise for gyro
 
     def __init__(self, device_addr, transposition, scaling):
 
@@ -87,11 +89,11 @@ class InvenSenseMPU(object):
         self.gyro_range = 0                     # Likewise for gyro
 
     # read from device
-    def _read(self, buf, memaddr, addr):        # addr = I2C device address, memaddr = memory location within the I2C device
+    def _read(self, buf, memaddr):        # addr = I2C device address, memaddr = memory location within the I2C device
         """
         Read bytes to pre-allocated buffer Caller traps OSError.
         """
-        self._mpu_interface.readbsfr(memaddr, buf)   # todo check use of timeout
+        self._mpu_interface.read_bsfr(memaddr, buf)   # todo check use of timeout
 
     # write to device
     def _write(self, data, memaddr):
@@ -201,7 +203,7 @@ class InvenSenseMPU(object):
         """
         try:
             self._read(self.buf1, 0x1C)
-            ari = self.buf1[0]//8
+            ari = self.buf1[0]//8 # todo check right return valur from chip
         except OSError:
             raise MPUException(self._I2Cerror)
         return ari
@@ -217,6 +219,7 @@ class InvenSenseMPU(object):
         if accel_range in range(len(ar_bytes)):
             try:
                 self._write(ar_bytes[accel_range], 0x1C)
+                self._accel_range = ar_bytes[accel_range]
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -249,6 +252,7 @@ class InvenSenseMPU(object):
         if gyro_range in range(len(gr_bytes)):
             try:
                 self._write(gr_bytes[gyro_range], 0x1B)  # Sets fchoice = b11 which enables filter
+                self._gyro_range = gr_bytes[gyro_range]
             except OSError:
                 raise MPUException(self._I2Cerror)
         else:
@@ -273,10 +277,10 @@ class InvenSenseMPU(object):
         self._accel._ivector[0] = bytes_toint(self.buf6[0], self.buf6[1])
         self._accel._ivector[1] = bytes_toint(self.buf6[2], self.buf6[3])
         self._accel._ivector[2] = bytes_toint(self.buf6[4], self.buf6[5])
-        scale = (16384, 8192, 4096, 2048)
-        self._accel._vector[0] = self._accel._ivector[0]/scale[self.accel_range]
-        self._accel._vector[1] = self._accel._ivector[1]/scale[self.accel_range]
-        self._accel._vector[2] = self._accel._ivector[2]/scale[self.accel_range]
+        scale = (16384, 8192, 4096, 2048) # todo save the values in class, show first own device
+        self._accel._vector[0] = self._accel._ivector[0]/scale[self._accel_range]
+        self._accel._vector[1] = self._accel._ivector[1]/scale[self._accel_range]
+        self._accel._vector[2] = self._accel._ivector[2]/scale[self._accel_range]
 
     def get_accel_irq(self):
         """
@@ -308,9 +312,9 @@ class InvenSenseMPU(object):
         self._gyro._ivector[1] = bytes_toint(self.buf6[2], self.buf6[3])
         self._gyro._ivector[2] = bytes_toint(self.buf6[4], self.buf6[5])
         scale = (131, 65.5, 32.8, 16.4)
-        self._gyro._vector[0] = self._gyro._ivector[0]/scale[self.gyro_range]
-        self._gyro._vector[1] = self._gyro._ivector[1]/scale[self.gyro_range]
-        self._gyro._vector[2] = self._gyro._ivector[2]/scale[self.gyro_range]
+        self._gyro._vector[0] = self._gyro._ivector[0]/scale[self._gyro_range]
+        self._gyro._vector[1] = self._gyro._ivector[1]/scale[self._gyro_range]
+        self._gyro._vector[2] = self._gyro._ivector[2]/scale[self._gyro_range]
 
     def get_gyro_irq(self):
         """
